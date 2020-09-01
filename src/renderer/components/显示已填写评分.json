@@ -1,0 +1,27 @@
+[
+  {
+    "group": 1,
+    "id": 1,
+    "label": "年龄",
+    "score": 2,
+    "value": "12"
+  },{
+    "group": 1,
+    "id": 3,
+    "label": "急性肾衰竭",
+    "score": 3,
+    "value": true
+  },{
+    "group": 1,
+    "id": 2,
+    "label": "睁眼反应",
+    "score": 2,
+    "value": "反应2"
+  },{
+    "group": 1,
+    "id": 5,
+    "label": "",
+    "score": 3,
+    "value": "不能手术或急诊手术"
+  }
+]

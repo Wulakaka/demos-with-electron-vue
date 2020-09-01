@@ -1,0 +1,55 @@
+[
+  {
+    "group": 1,
+    "children":[
+      {
+        "id": 1,
+        "label": "年龄",
+        "type": "input",
+        "score": 2
+      },
+      {
+        "id": 3,
+        "label": "急性肾衰竭",
+        "type": "checkbox",
+        "score":3
+      },
+      {
+        "id": 2,
+        "label": "睁眼反应",
+        "type": "select",
+        "options": [
+          {
+            "label":"反应1",
+            "score":1
+          },{
+            "label":"反应2",
+            "score":2
+          },{
+            "label":"反应3",
+            "score":3
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "label": "",
+        "type": "radio",
+        "options": [
+          {
+            "label": "择期手术",
+            "score":1
+          },{
+            "label": "不能手术或急诊手术",
+            "score":3
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "label": "病情描述",
+        "type": "textarea"
+      }
+    ]
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "border": {
+      "color": "#000000",
+      "position": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ],
+      "width": 1
+    },
+    "dataSource": {
+      "className": "",
+      "tableName": ""
+    },
+    "dictionarySource": {
+      "dictClassName": "",
+      "dictTableName": ""
+    },
+    "font": {
+      "lineHeight": 30,
+      "size": 9,
+      "textAlign": "left",
+      "weight": "normal"
+    },
+    "height": 30,
+    "id": "96c3d791-a81e-48df-927b-0271f4dc6e9d",
+    "multiSelect": false,
+    "name": "widget-input",
+    "placeholder": "占位内容",
+    "positionX": 70,
+    "positionY": 147,
+    "readonly": false,
+    "width": 100
+  }
+]

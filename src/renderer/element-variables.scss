@@ -1,0 +1,53 @@
+/* 改变主题色变量 */
+$--custom-el-background-color:#252C40;
+/* Color
+-------------------------- */
+// 常用字颜色
+/// color|1|Font Color|2
+$--color-text-regular: #9BA3D5;
+
+/// color|1|Border Color|3
+$--border-color-base: #353E56;
+
+
+
+
+/* Checkbox
+-------------------------- */
+/// color||Color|0
+$--checkbox-background-color: $--custom-el-background-color;
+/// color||Color|0
+$--checkbox-checked-font-color: #ffffff;
+/// color||Color|0
+// $--checkbox-disabled-input-fill: #6c7eb3;
+
+// $--checkbox-disabled-checked-input-fill: #6c7eb3;
+
+/* Input
+-------------------------- */
+/// color||Color|0
+$--input-font-color: #ffffff;
+/// color||Color|0
+$--input-background-color:$--custom-el-background-color;
+
+
+/* Button
+-------------------------- */
+/// color||Color|0
+$--button-default-background-color: $--custom-el-background-color;
+
+/* Select
+-------------------------- */
+$--select-dropdown-background: $--custom-el-background-color;
+$--select-dropdown-border: solid 1px #353E56;
+/// height||Other|4
+$--select-option-hover-background: #0d0f16;
+
+/* Popover
+-------------------------- */
+/// color||Color|0
+$--popover-background-color: $--custom-el-background-color;
+/* 改变 icon 字体路径变量，必需 */
+$--font-path: '~element-ui/lib/theme-chalk/fonts';
+
+@import "~element-ui/packages/theme-chalk/src/index";
