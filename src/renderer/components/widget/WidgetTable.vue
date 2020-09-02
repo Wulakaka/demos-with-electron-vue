@@ -36,6 +36,7 @@
 </template>
 <script>
 import WidgetTableCell from './WidgetTableCell'
+import debounce from 'lodash/debounce'
 
 export default {
   name: 'WidgetTable',
@@ -72,7 +73,11 @@ export default {
     }
   },
   created () {
-    this.table.cells = this.generateCells(5, 3)
+    this.table.cells = this.generateCells(35, 5)
+    this.onMouseMove = debounce(this.onMouseMove, 16)
+    this.cells = this.table.cells.reduce((acc, row) => {
+      return [...acc, ...row]
+    }, [])
   },
   methods: {
     generateCells (rows, cols) {
@@ -113,10 +118,13 @@ export default {
       this.resetActiveCellsArray()
     },
     onActivate (cell) {
+      // console.log('activate', new Date())
       this.activeCellsByHover[cell.index] = cell
       this.resetActiveCells()
+      // console.log('activate end', new Date())
     },
     onDeactivate ({ index }) {
+      console.log('deactivate')
       delete this.activeCellsByHover[index]
       this.resetActiveCells()
     },
@@ -133,9 +141,9 @@ export default {
             const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
             return (
               rowLowerBound <= _rowLowerBound &&
-                rowHigherBound >= _rowHigherBound &&
-                colLowerBound <= _colLowerBound &&
-                colHigherBound >= _colHigherBound
+                                rowHigherBound >= _rowHigherBound &&
+                                colLowerBound <= _colLowerBound &&
+                                colHigherBound >= _colHigherBound
             )
           })
         }).reduce((acc, row) => {
@@ -198,26 +206,24 @@ export default {
       this.activeCells = this.activeCellsByHover
       while (
         rowLowerBound !== newRowLowerBound ||
-          rowHigherBound !== newRowHigherBound ||
-          colLowerBound !== newColLowerBound ||
-          colHigherBound !== newColHigherBound
+                    rowHigherBound !== newRowHigherBound ||
+                    colLowerBound !== newColLowerBound ||
+                    colHigherBound !== newColHigherBound
       ) {
         ({
           rowLowerBound, rowHigherBound, colLowerBound, colHigherBound
         } = this.getBounds(this.activeCells))
-        this.table.cells.forEach(row => {
-          row.forEach(cell => {
-            const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
-            // 判断是否有交集
-            if (
-              Math.max(rowLowerBound, _rowLowerBound) < Math.min(rowHigherBound, _rowHigherBound) &&
-                Math.max(colLowerBound, _colLowerBound) < Math.min(colHigherBound, _colHigherBound)
-            ) {
-              this.activeCells[cell.index] = cell
-            } else {
-              delete this.activeCells[cell.index]
-            }
-          })
+        this.cells.forEach(cell => {
+          const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
+          // 判断是否有交集
+          if (
+            Math.max(rowLowerBound, _rowLowerBound) < Math.min(rowHigherBound, _rowHigherBound) &&
+                            Math.max(colLowerBound, _colLowerBound) < Math.min(colHigherBound, _colHigherBound)
+          ) {
+            this.activeCells[cell.index] = cell
+          } else {
+            delete this.activeCells[cell.index]
+          }
         });
         ({
           rowLowerBound: newRowLowerBound,
