@@ -54,11 +54,11 @@ export default {
         if ((Math.max(this.range.x[0], position.x[0]) <= Math.min(this.range.x[1], position.x[1])) &&
           (Math.max(this.range.y[0], position.y[0]) <= Math.min(this.range.y[1], position.y[1]))
         ) {
-          this.$emit('activate', this.cell)
+          this.$emit('activate', this.cell.index)
           return
         }
       }
-      this.$emit('deactivate', this.cell)
+      this.$emit('deactivate', this.cell.index)
     }
   }
 }

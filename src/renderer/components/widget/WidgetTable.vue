@@ -1,9 +1,8 @@
 <template>
-  <div>
+  <div class="content">
     <table
       class="table"
       @mousedown.capture="onMouseDown"
-      @mouseup.capture="onMouseUp"
       ref="table"
     >
       <tr
@@ -22,16 +21,45 @@
         />
       </tr>
     </table>
-    <el-button
-      size="mini"
-      @click="onMergeCells"
-    >
-      合并
-    </el-button>
-    {{ range }}{{ activeCellsArray }}
-    <pre>
-      {{ table.cells }}
-    </pre>
+    <div>
+      <div>
+        <el-button
+          size="mini"
+          @click="onMergeCells"
+        >
+          合并
+        </el-button>
+      </div>
+      <div>
+        <el-button
+          size="mini"
+          @click="onSplitCells"
+        >
+          拆分
+        </el-button>
+      </div>
+      <div>
+        行数
+        <el-input-number
+          v-model="rows"
+          size="mini"
+          @change="onChangeRows"
+          step-strictly
+          :min="1"
+        />
+      </div>
+      <div>
+        列数
+        <el-input-number
+          v-model="cols"
+          size="mini"
+          @change="onChangeCols"
+          step-strictly
+          :min="1"
+        />
+      </div>
+      {{ activeCellsArray }}
+    </div>
   </div>
 </template>
 <script>
@@ -45,13 +73,20 @@ export default {
   },
   data () {
     return {
+      rows: 10,
+      cols: 5,
+      // 数据结构
       table: {
         cells: []
       },
-      activeCellsByHover: {},
-      activeCells: {},
+      // 辅助变量
+      // 存储与鼠标范围有交集的单元格
+      activeCellsSetByHover: new Set(),
+      // 存储最终被选中的单元格
       activeCellsArray: [],
+      // 鼠标框选范围开始位置
       startPosition: null,
+      // 鼠标框选范围结束位置
       endPosition: null
     }
   },
@@ -70,63 +105,157 @@ export default {
         }
       }
       return {}
+    },
+    // 辅助变量 - 将单元格变为一维数组 - 为了快速获取单元格数据
+    cellArray () {
+      return this.table.cells.reduce((acc, row) => [...acc, ...row], [])
+    },
+    // 辅助变量 - 单元格map - 为了快速获取单元格数据
+    cellMap () {
+      return this.cellArray.reduce((acc, cell) => {
+        acc[cell.index] = cell
+        return acc
+      }, {})
+    },
+    // 辅助变量 - 存储所有单元格index的set
+    cellIndexSet () {
+      return new Set(Object.keys(this.cellMap))
     }
   },
+  // watch: {
+  //   cellArray: function () {
+  //     console.log('cellArray')
+  //   },
+  //   cellMap: function () {
+  //     console.log('cellMap')
+  //   },
+  //   cellIndexSet: function () {
+  //     console.log('cellIndexSet')
+  //   }
+  // },
   created () {
-    this.table.cells = this.generateCells(35, 5)
-    this.onMouseMove = debounce(this.onMouseMove, 16)
-    this.cells = this.table.cells.reduce((acc, row) => {
-      return [...acc, ...row]
-    }, [])
+    this.table.cells = this.generateCells(this.rows, this.cols)
+    this.onMouseMove = debounce(this.onMouseMove, 10)
   },
   methods: {
+    // 根据行数列数生成表格初始数据
     generateCells (rows, cols) {
       const cells = []
       for (let row = 0; row < rows; row++) {
         const _row = []
         for (let col = 0; col < cols; col++) {
-          _row.push({
+          const cell = {
             index: `${row}-${row + 1}_${col}-${col + 1}`,
             width: 100,
             height: 30
-          })
+          }
+          _row.push(cell)
         }
         cells.push(_row)
       }
       return cells
     },
     onMouseDown (e) {
-      // 重置处于活跃状态的单元格
-      this.activeCells = {}
       // 重置处于活跃状态的单元格的数组
-      this.resetActiveCellsArray()
+      this.activeCellsArray = []
+      this.activeCellsSetByHover.clear()
       // 重置起始位置
       this.startPosition = this.getTableOffset(e)
       // 清空结束位置
       this.endPosition = null
       // 增加监听
-      this.$refs.table.addEventListener('mousemove', this.onMouseMove)
+      window.addEventListener('mousemove', this.onMouseMove)
+      window.addEventListener('mouseup', this.onMouseUp)
+      // 存储一个保存所有索引的set，用于判断是否所有状态已经更新
+      this.toBeActivateAndDeactivateSet = new Set(this.cellIndexSet)
     },
     onMouseMove (e) {
-      this.endPosition = this.getTableOffset(e)
+      if (e.path.includes(this.$refs.table)) {
+        this.endPosition = this.getTableOffset(e)
+      }
     },
     onMouseUp (e) {
-      this.endPosition = this.getTableOffset(e)
-      this.$refs.table.removeEventListener('mousemove', this.onMouseMove)
-      this.activeCells = this.activeCellsByHover
-      this.activeCellsByHover = {}
-      this.resetActiveCellsArray()
+      if (e.path.includes(this.$refs.table)) {
+        this.onMouseMove(e)
+        window.removeEventListener('mousemove', this.onMouseMove)
+      }
+      window.removeEventListener('mouseup', this.onMouseUp)
     },
-    onActivate (cell) {
-      // console.log('activate', new Date())
-      this.activeCellsByHover[cell.index] = cell
-      this.resetActiveCells()
-      // console.log('activate end', new Date())
+    // 激活
+    onActivate (cellIndex) {
+      this.activeCellsSetByHover.add(cellIndex)
+      this.toBeActivateAndDeactivateSet.delete(cellIndex)
+      if (this.toBeActivateAndDeactivateSet.size === 0) {
+        this.toBeActivateAndDeactivateSet = new Set(this.cellIndexSet)
+        this.setActiveCellsArray()
+      }
     },
-    onDeactivate ({ index }) {
-      console.log('deactivate')
-      delete this.activeCellsByHover[index]
-      this.resetActiveCells()
+    // 灭活
+    onDeactivate (cellIndex) {
+      this.activeCellsSetByHover.delete(cellIndex)
+      this.toBeActivateAndDeactivateSet.delete(cellIndex)
+      if (this.toBeActivateAndDeactivateSet.size === 0) {
+        this.toBeActivateAndDeactivateSet = new Set(this.cellIndexSet)
+        this.setActiveCellsArray()
+      }
+    },
+    onChangeRows (newRows, oldRows) {
+      if (newRows > oldRows) {
+        for (let row = oldRows; row < newRows; row++) {
+          const _row = []
+          for (let col = 0; col < this.cols; col++) {
+            const cell = {
+              index: `${row}-${row + 1}_${col}-${col + 1}`,
+              width: 100,
+              height: 30
+            }
+            _row.push(cell)
+          }
+          this.table.cells.push(_row)
+        }
+      } else if (newRows < oldRows) {
+        // 删除多余行
+        for (let row = oldRows; row > newRows; row--) {
+          this.table.cells.pop()
+        }
+        // 对index进行修正
+        this.cellArray.forEach(cell => {
+          const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
+          if (+_rowHigherBound > newRows) {
+            cell.index = `${_rowLowerBound}-${newRows}_${_colLowerBound}-${_colHigherBound}`
+          }
+        })
+      }
+    },
+    onChangeCols (newCols, oldCols) {
+      if (newCols > oldCols) {
+        this.table.cells.forEach((row, rowIndex) => {
+          for (let col = oldCols; col < newCols; col++) {
+            const cell = {
+              index: `${rowIndex}-${rowIndex + 1}_${col}-${col + 1}`,
+              width: 100,
+              height: 30
+            }
+            row.push(cell)
+          }
+        })
+      } else if (newCols < oldCols) {
+        // 对index进行修正
+        const cellArray = [...this.cellArray].reverse()
+        cellArray.forEach(cell => {
+          const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
+          if (+_colLowerBound >= newCols) {
+            const {
+              rowIndex,
+              colIndex
+            } = this.getCellByIndex(cell.index)
+            this.table.cells[rowIndex].splice(colIndex, 1)
+          }
+          if (+_colHigherBound > newCols) {
+            cell.index = `${_rowLowerBound}-${_rowHigherBound}_${_colLowerBound}-${newCols}`
+          }
+        })
+      }
     },
     // 合并单元格
     onMergeCells () {
@@ -135,15 +264,16 @@ export default {
         // 获取边界
         const {
           rowLowerBound, rowHigherBound, colLowerBound, colHigherBound
-        } = this.getBounds(this.activeCells)
+        } = this.getBounds(this.activeCellsArray)
         const activeCells = this.table.cells.map(row => {
           return row.filter(cell => {
-            const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
+            const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] =
+                /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
             return (
               rowLowerBound <= _rowLowerBound &&
-                                rowHigherBound >= _rowHigherBound &&
-                                colLowerBound <= _colLowerBound &&
-                                colHigherBound >= _colHigherBound
+                rowHigherBound >= _rowHigherBound &&
+                colLowerBound <= _colLowerBound &&
+                colHigherBound >= _colHigherBound
             )
           })
         }).reduce((acc, row) => {
@@ -158,15 +288,46 @@ export default {
           const { rowIndex, colIndex } = this.getCellByIndex(cell.index)
           this.table.cells[rowIndex].splice(colIndex, 1)
         })
+
         // 重置起始位置
         this.startPosition = null
         // 重置结束位置
         this.endPosition = null
-        // 重置处于活跃状态的单元格
-        this.activeCells = {}
         // 重置处于活跃状态的单元格的数组
-        this.resetActiveCellsArray()
+        this.activeCellsArray = [leftTopCell.index]
       }
+    },
+    // 拆分单元格
+    onSplitCells () {
+      const { length } = this.activeCellsArray
+      if (length === 0) return
+      const activeCellsArray = []
+      const splitCell = (cellIndex) => {
+        const leftTopCell = this.getCellByIndex(cellIndex).cell
+        const [, rowLowerBound, rowHigherBound, colLowerBound, colHigherBound] =
+            /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cellIndex)
+        leftTopCell.index = `${rowLowerBound}-${+rowLowerBound + 1}_${colLowerBound}-${+colLowerBound + 1}`
+        for (let row = +rowLowerBound; row < +rowHigherBound; row++) {
+          for (let col = +colLowerBound; col < +colHigherBound; col++) {
+            activeCellsArray.push(`${row}-${row + 1}_${col}-${col + 1}`)
+            if (row !== +rowLowerBound || col !== +colLowerBound) {
+              const cell = {
+                index: `${row}-${row + 1}_${col}-${col + 1}`,
+                width: 100,
+                height: 30
+              }
+              this.table.cells[row].push(cell)
+            }
+          }
+          this.table.cells[row].sort((a, b) => {
+            const [, colLowerBoundA] = /^\d+-\d+_(\d+)-\d+$/.exec(a.index)
+            const [, colLowerBoundB] = /^\d+-\d+_(\d+)-\d+$/.exec(b.index)
+            return colLowerBoundA - colLowerBoundB
+          })
+        }
+      }
+      this.activeCellsArray.forEach(cellIndex => splitCell(cellIndex))
+      this.activeCellsArray = activeCellsArray
     },
     // 获取以table为基准的相对位置
     getTableOffset (e) {
@@ -183,9 +344,9 @@ export default {
       return offset
     },
     // 获取边界
-    getBounds (cellsMap) {
+    getBounds (cellIndexArray) {
       let rowLowerBound, rowHigherBound, colLowerBound, colHigherBound
-      Object.keys(cellsMap).forEach(cellIndex => {
+      cellIndexArray.forEach(cellIndex => {
         const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cellIndex)
         rowLowerBound = typeof rowLowerBound === 'undefined' ? _rowLowerBound : Math.min(rowLowerBound, _rowLowerBound)
         rowHigherBound = typeof rowHigherBound === 'undefined' ? _rowHigherBound : Math.max(rowHigherBound, _rowHigherBound)
@@ -196,33 +357,35 @@ export default {
         rowLowerBound, rowHigherBound, colLowerBound, colHigherBound
       }
     },
-    resetActiveCells () {
+    // 设置活跃的单元格数组
+    setActiveCellsArray () {
       let {
         rowLowerBound, rowHigherBound, colLowerBound, colHigherBound
-      } = this.getBounds(this.activeCellsByHover)
+      } = this.getBounds([...this.activeCellsSetByHover])
       if (typeof rowLowerBound === 'undefined') return
       // 循环获取激活边界
       let newRowLowerBound, newRowHigherBound, newColLowerBound, newColHigherBound
-      this.activeCells = this.activeCellsByHover
+      const activeCellsSet = new Set(this.activeCellsSetByHover)
       while (
         rowLowerBound !== newRowLowerBound ||
-                    rowHigherBound !== newRowHigherBound ||
-                    colLowerBound !== newColLowerBound ||
-                    colHigherBound !== newColHigherBound
+          rowHigherBound !== newRowHigherBound ||
+          colLowerBound !== newColLowerBound ||
+          colHigherBound !== newColHigherBound
       ) {
-        ({
-          rowLowerBound, rowHigherBound, colLowerBound, colHigherBound
-        } = this.getBounds(this.activeCells))
-        this.cells.forEach(cell => {
+        rowLowerBound = newRowLowerBound || rowLowerBound
+        rowHigherBound = newRowHigherBound || rowHigherBound
+        colLowerBound = newColLowerBound || colLowerBound
+        colHigherBound = newColHigherBound || colHigherBound
+        this.cellArray.forEach(cell => {
           const [, _rowLowerBound, _rowHigherBound, _colLowerBound, _colHigherBound] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
           // 判断是否有交集
           if (
             Math.max(rowLowerBound, _rowLowerBound) < Math.min(rowHigherBound, _rowHigherBound) &&
-                            Math.max(colLowerBound, _colLowerBound) < Math.min(colHigherBound, _colHigherBound)
+              Math.max(colLowerBound, _colLowerBound) < Math.min(colHigherBound, _colHigherBound)
           ) {
-            this.activeCells[cell.index] = cell
+            activeCellsSet.add(cell.index)
           } else {
-            delete this.activeCells[cell.index]
+            activeCellsSet.delete(cell.index)
           }
         });
         ({
@@ -230,13 +393,11 @@ export default {
           rowHigherBound: newRowHigherBound,
           colLowerBound: newColLowerBound,
           colHigherBound: newColHigherBound
-        } = this.getBounds(this.activeCells))
+        } = this.getBounds(Array.from(activeCellsSet)))
       }
-      this.resetActiveCellsArray()
+      this.activeCellsArray = Array.from(activeCellsSet)
     },
-    resetActiveCellsArray () {
-      this.activeCellsArray = Object.keys(this.activeCells)
-    },
+    // 通过index获取单元格信息
     getCellByIndex (index) {
       const [, rowIndex] = /^(\d+)-\d+_\d+-\d+$/.exec(index)
       const cell = this.table.cells[rowIndex].find(cell => cell.index === index)
@@ -252,11 +413,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .table {
-    border-collapse: collapse;
+  .content {
+    display: flex;
 
-    tr {
-      height: 30px;
+    .table {
+      border-collapse: collapse;
+
+      tr {
+        height: 30px;
+      }
     }
   }
 
