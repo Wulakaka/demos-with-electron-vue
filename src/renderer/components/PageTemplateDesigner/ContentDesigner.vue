@@ -44,6 +44,7 @@ import WidgetText from './WidgetText'
 import WidgetLine from './WidgetLine'
 import WidgetPhysicalSign from './WidgetPhysicalSign'
 import WidgetNews from './WidgetNews'
+import WidgetTable from './WidgetTable'
 // const Random = Mock.Random
 const { mapState, mapActions } = createNamespacedHelpers(
   'Designer'
@@ -58,7 +59,8 @@ export default {
     WidgetText,
     WidgetLine,
     WidgetPhysicalSign,
-    WidgetNews
+    WidgetNews,
+    WidgetTable
   },
   data () {
     return {

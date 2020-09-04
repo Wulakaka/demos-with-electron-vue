@@ -1,85 +1,87 @@
 <template>
-  <div class="content">
-    <table
-      class="table"
-      @mousedown.capture="onMouseDown"
-      ref="table"
+  <div>
+    <el-form-item label="单元格配置">
+      <el-button @click="onConfigure">
+        配置
+      </el-button>
+    </el-form-item>
+    <el-dialog
+      title="单元格配置"
+      :visible.sync="dialogVisible"
+      fullscreen
+      destroy-on-close
     >
-      <tr
-        v-for="(col, rolIndex) of table.cells"
-        :key="rolIndex"
+      <div class="dialogContent">
+        <div class="tableContent">
+          <table
+            class="table"
+            @mousedown.capture="onMouseDown"
+            ref="table"
+          >
+            <tr
+              v-for="(col, rolIndex) of cells"
+              :key="rolIndex"
+            >
+              <td
+                is="ConfigurationTableCell"
+                v-for="(cell, rowIndex) of col"
+                :key="rowIndex"
+                :cell="cell"
+                :range="range"
+                :active-cells-array="activeCellsArray"
+                @activate="onActivate"
+                @deactivate="onDeactivate"
+              />
+            </tr>
+          </table>
+          {{ cellActiveConfiguration }}
+        </div>
+        <div class="configurationContent">
+          <configuration-cells-form
+            :rows="rows"
+            :cols="cols"
+            :cell-active-configuration="cellActiveConfiguration"
+            @merge-cells="onMergeCells"
+            @split-cells="onSplitCells"
+            @change-rows="onChangeRows"
+            @change-cols="onChangeCols"
+            @change-cell="onChangeCell"
+          />
+        </div>
+      </div>
+      <span
+        slot="footer"
+        class="dialog-footer"
       >
-        <td
-          is="WidgetTableCell"
-          v-for="(cell, rowIndex) of col"
-          :key="rowIndex"
-          :cell="cell"
-          :range="range"
-          :active-cells-array="activeCellsArray"
-          @activate="onActivate"
-          @deactivate="onDeactivate"
-        />
-      </tr>
-    </table>
-    <div>
-      <div>
+        <el-button @click="dialogVisible = false">取 消</el-button>
         <el-button
-          size="mini"
-          @click="onMergeCells"
-        >
-          合并
-        </el-button>
-      </div>
-      <div>
-        <el-button
-          size="mini"
-          @click="onSplitCells"
-        >
-          拆分
-        </el-button>
-      </div>
-      <div>
-        行数
-        <el-input-number
-          v-model="rows"
-          size="mini"
-          @change="onChangeRows"
-          step-strictly
-          :min="1"
-        />
-      </div>
-      <div>
-        列数
-        <el-input-number
-          v-model="cols"
-          size="mini"
-          @change="onChangeCols"
-          step-strictly
-          :min="1"
-        />
-      </div>
-      {{ activeCellsArray }}
-    </div>
+          type="primary"
+          @click="onConfirm"
+        >确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
+
 <script>
-import WidgetTableCell from './WidgetTableCell'
+import ConfigurationTableCell from './ConfigurationTableCell'
+import ConfigurationCellsForm from './ConfigurationCellsForm'
 import debounce from 'lodash/debounce'
+import cloneDeep from 'lodash/cloneDeep'
 import { Cell } from '@/model/WidgetTable'
 export default {
-  name: 'WidgetTable',
+  name: 'ConfigurationCells',
   components: {
-    WidgetTableCell
+    ConfigurationTableCell,
+    ConfigurationCellsForm
   },
   data () {
     return {
-      rows: 10,
-      cols: 5,
-      // 数据结构
-      table: {
-        cells: []
-      },
+      dialogVisible: false,
       // 辅助变量
+      cells: [],
+      rows: 1,
+      cols: 1,
       // 存储与鼠标范围有交集的单元格
       activeCellsSetByHover: new Set(),
       // 存储最终被选中的单元格
@@ -88,6 +90,12 @@ export default {
       startPosition: null,
       // 鼠标框选范围结束位置
       endPosition: null
+    }
+  },
+  props: {
+    value: {
+      type: Array,
+      required: true
     }
   },
   computed: {
@@ -108,7 +116,7 @@ export default {
     },
     // 辅助变量 - 将单元格变为一维数组 - 为了快速获取单元格数据
     cellArray () {
-      return this.table.cells.reduce((acc, row) => [...acc, ...row], [])
+      return this.cells.reduce((acc, row) => [...acc, ...row], [])
     },
     // 辅助变量 - 单元格map - 为了快速获取单元格数据
     cellMap () {
@@ -120,36 +128,47 @@ export default {
     // 辅助变量 - 存储所有单元格index的set
     cellIndexSet () {
       return new Set(Object.keys(this.cellMap))
+    },
+    // 辅助变量 - 存储所有激活状态单元格
+    cellArrayActive () {
+      return this.cellArray.filter(cell => this.activeCellsArray.includes(cell.index))
+    },
+    cellActiveConfiguration () {
+      // console.log(this.cellArrayActive)
+      const configurationNames = ['width', 'height', 'borderColor']
+      const configurationMap = configurationNames.reduce((acc, name) => {
+        acc[name] = new Set()
+        return acc
+      }, {})
+
+      this.cellArrayActive.forEach(cell => {
+        configurationNames.forEach(name => {
+          // console.log(configurationMap[name])
+          configurationMap[name].add(cell[name])
+        })
+      })
+
+      for (const name in configurationMap) {
+        configurationMap[name] = [...configurationMap[name]]
+      }
+      return configurationMap
     }
   },
-  // watch: {
-  //   cellArray: function () {
-  //     console.log('cellArray')
-  //   },
-  //   cellMap: function () {
-  //     console.log('cellMap')
-  //   },
-  //   cellIndexSet: function () {
-  //     console.log('cellIndexSet')
-  //   }
-  // },
   created () {
-    this.table.cells = this.generateCells(this.rows, this.cols)
     this.onMouseMove = debounce(this.onMouseMove, 10)
+    this.cells = cloneDeep(this.value)
+    const {
+      rowLowerBound,
+      rowHigherBound,
+      colLowerBound,
+      colHigherBound
+    } = this.getBounds([...this.cellIndexSet])
+    this.rows = rowHigherBound - rowLowerBound
+    this.cols = colHigherBound - colLowerBound
   },
   methods: {
-    // 根据行数列数生成表格初始数据
-    generateCells (rows, cols) {
-      const cells = []
-      for (let row = 0; row < rows; row++) {
-        const _row = []
-        for (let col = 0; col < cols; col++) {
-          const cell = new Cell(`${row}-${row + 1}_${col}-${col + 1}`)
-          _row.push(cell)
-        }
-        cells.push(_row)
-      }
-      return cells
+    onConfigure () {
+      this.dialogVisible = true
     },
     onMouseDown (e) {
       // 重置处于活跃状态的单元格的数组
@@ -195,7 +214,9 @@ export default {
         this.setActiveCellsArray()
       }
     },
-    onChangeRows (newRows, oldRows) {
+    // 修改行数
+    onChangeRows ({ newRows, oldRows }) {
+      this.rows = newRows
       if (newRows > oldRows) {
         for (let row = oldRows; row < newRows; row++) {
           const _row = []
@@ -203,12 +224,12 @@ export default {
             const cell = new Cell(`${row}-${row + 1}_${col}-${col + 1}`)
             _row.push(cell)
           }
-          this.table.cells.push(_row)
+          this.cells.push(_row)
         }
       } else if (newRows < oldRows) {
         // 删除多余行
         for (let row = oldRows; row > newRows; row--) {
-          this.table.cells.pop()
+          this.cells.pop()
         }
         // 对index进行修正
         this.cellArray.forEach((cell) => {
@@ -225,9 +246,11 @@ export default {
         })
       }
     },
-    onChangeCols (newCols, oldCols) {
+    // 修改列数
+    onChangeCols ({ newCols, oldCols }) {
+      this.cols = newCols
       if (newCols > oldCols) {
-        this.table.cells.forEach((row, rowIndex) => {
+        this.cells.forEach((row, rowIndex) => {
           for (let col = oldCols; col < newCols; col++) {
             const cell = new Cell(
               `${rowIndex}-${rowIndex + 1}_${col}-${col + 1}`
@@ -248,7 +271,7 @@ export default {
           ] = /^(\d+)-(\d+)_(\d+)-(\d+)$/.exec(cell.index)
           if (+_colLowerBound >= newCols) {
             const { rowIndex, colIndex } = this.getCellByIndex(cell.index)
-            this.table.cells[rowIndex].splice(colIndex, 1)
+            this.cells[rowIndex].splice(colIndex, 1)
           }
           if (+_colHigherBound > newCols) {
             cell.index = `${_rowLowerBound}-${_rowHigherBound}_${_colLowerBound}-${newCols}`
@@ -267,7 +290,7 @@ export default {
           colLowerBound,
           colHigherBound
         } = this.getBounds(this.activeCellsArray)
-        const activeCells = this.table.cells
+        const activeCells = this.cells
           .map((row) => {
             return row.filter((cell) => {
               const [
@@ -295,7 +318,7 @@ export default {
         activeCells.reverse()
         activeCells.forEach((cell) => {
           const { rowIndex, colIndex } = this.getCellByIndex(cell.index)
-          this.table.cells[rowIndex].splice(colIndex, 1)
+          this.cells[rowIndex].splice(colIndex, 1)
         })
 
         // 重置起始位置
@@ -328,10 +351,10 @@ export default {
             activeCellsArray.push(`${row}-${row + 1}_${col}-${col + 1}`)
             if (row !== +rowLowerBound || col !== +colLowerBound) {
               const cell = new Cell(`${row}-${row + 1}_${col}-${col + 1}`)
-              this.table.cells[row].push(cell)
+              this.cells[row].push(cell)
             }
           }
-          this.table.cells[row].sort((a, b) => {
+          this.cells[row].sort((a, b) => {
             const [, colLowerBoundA] = /^\d+-\d+_(\d+)-\d+$/.exec(a.index)
             const [, colLowerBoundB] = /^\d+-\d+_(\d+)-\d+$/.exec(b.index)
             return colLowerBoundA - colLowerBoundB
@@ -340,6 +363,19 @@ export default {
       }
       this.activeCellsArray.forEach((cellIndex) => splitCell(cellIndex))
       this.activeCellsArray = activeCellsArray
+    },
+    // 单元格配置修改
+    onChangeCell (name, val) {
+      this.cellArrayActive.forEach(cell => {
+        cell[name] = val
+      })
+    },
+    // 确定
+    onConfirm () {
+      this.$emit('change', {
+        cells: this.cells
+      })
+      this.dialogVisible = false
     },
     // 获取以table为基准的相对位置
     getTableOffset (e) {
@@ -447,10 +483,10 @@ export default {
     // 通过index获取单元格信息
     getCellByIndex (index) {
       const [, rowIndex] = /^(\d+)-\d+_\d+-\d+$/.exec(index)
-      const cell = this.table.cells[rowIndex].find(
+      const cell = this.cells[rowIndex].find(
         (cell) => cell.index === index
       )
-      const colIndex = this.table.cells[rowIndex].findIndex(
+      const colIndex = this.cells[rowIndex].findIndex(
         (cell) => cell.index === index
       )
       return {
@@ -461,18 +497,23 @@ export default {
     }
   }
 }
+
 </script>
-
-<style lang="scss" scoped>
-.content {
-  display: flex;
-
-  .table {
-    border-collapse: collapse;
-
-    tr {
-      height: 30px;
+<style lang='scss' scoped>
+.dialogContent {
+  display:flex;
+  height: 80vh;
+  .tableContent {
+    flex: 1 1 auto;
+    .table {
+      border-collapse: collapse;
+      margin: auto;
     }
+  }
+
+  .configurationContent {
+    flex: 0 0 200px;
+    border-left: gainsboro 1px solid;
   }
 }
 </style>

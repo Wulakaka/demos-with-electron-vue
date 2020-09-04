@@ -29,6 +29,10 @@ export default {
     return {
       widgetNameList: [
         {
+          label: '表格',
+          name: 'widget-table'
+        },
+        {
           label: '输入框',
           name: 'widget-input'
         },

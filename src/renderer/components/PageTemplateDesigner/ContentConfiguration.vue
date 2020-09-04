@@ -48,6 +48,7 @@ import ConfigurationYAxis from './ConfigurationYAxis'
 import ConfigurationXAxis from './ConfigurationXAxis'
 import ConfigurationDataSource from './ConfigurationDataSource'
 import ConfigurationDictionarySource from './ConfigurationDictionarySource'
+import ConfigurationCells from './ConfigurationCells'
 import { configurationMap } from './WidgetConfigurationItems'
 import { createNamespacedHelpers } from 'vuex'
 const { mapActions, mapGetters, mapState } = createNamespacedHelpers(
@@ -77,7 +78,8 @@ export default {
     ConfigurationYAxis,
     ConfigurationXAxis,
     ConfigurationDataSource,
-    ConfigurationDictionarySource
+    ConfigurationDictionarySource,
+    ConfigurationCells
   },
   watch: {
     activeWidget: {
