@@ -6,15 +6,22 @@
     :height="cell.height"
     :width="cell.width"
     :class="{active: active}"
-    :style="{'border-color': cell.borderColor}"
+    :style="style"
   >
-    {{ cell.index }}
+    <input
+      ref="input"
+      v-show="editable"
+      v-model="cell.text"
+    >
+    <span v-show="!editable">
+      {{ cell.text }}
+    </span>
   </td>
 </template>
 
 <script>
 export default {
-  name: 'ConfigrationTableCell',
+  name: 'ConfigrationCellsTableCell',
   props: {
     cell: {
       required: true,
@@ -27,6 +34,10 @@ export default {
     range: {
       required: true,
       type: Object
+    },
+    editable: {
+      required: true,
+      type: Boolean
     }
   },
   computed: {
@@ -40,6 +51,16 @@ export default {
     },
     active () {
       return this.activeCellsArray.includes(this.cell.index)
+    },
+    style () {
+      return {
+        'border-color': this.cell.borderColor || 'unset',
+        color: this.cell.color || 'unset',
+        'text-align': this.cell.textAlign || 'unset',
+        'text-indent': this.cell.textIndent ? `${this.cell.textIndent}px` : 'unset',
+        'font-size': this.cell.fontSize ? `${this.cell.fontSize}px` : 'unset',
+        'font-weight': this.cell.fontWeight || 'unset'
+      }
     }
   },
   watch: {
@@ -75,6 +96,11 @@ export default {
 
     &.active {
       background: rgba(173, 173, 173, 0.3);
+    }
+
+    input {
+      width: 100%;
+      height: 100%;
     }
   }
 </style>

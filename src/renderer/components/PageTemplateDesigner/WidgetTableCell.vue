@@ -5,9 +5,9 @@
     :rowspan="rowspan"
     :height="cell.height"
     :width="cell.width"
-    :style="{'border-color': cell.borderColor}"
+    :style="style"
   >
-    {{ cell.index }}
+    {{ cell.text }}
   </td>
 </template>
 
@@ -28,6 +28,16 @@ export default {
     rowspan () {
       const row = this.cell.index.split('_')[0]
       return row.split('-')[1] - row.split('-')[0]
+    },
+    style () {
+      return {
+        'border-color': this.cell.borderColor || 'unset',
+        color: this.cell.color || 'unset',
+        'text-align': this.cell.textAlign || 'unset',
+        'text-indent': this.cell.textIndent ? `${this.cell.textIndent}px` : 'unset',
+        'font-size': this.cell.fontSize ? `${this.cell.fontSize}px` : 'unset',
+        'font-weight': this.cell.fontWeight || 'unset'
+      }
     }
   }
 }

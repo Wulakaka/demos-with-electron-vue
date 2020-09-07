@@ -23,14 +23,16 @@
               :key="rolIndex"
             >
               <td
-                is="ConfigurationTableCell"
+                is="ConfigurationCellsTableCell"
                 v-for="(cell, rowIndex) of col"
                 :key="rowIndex"
                 :cell="cell"
                 :range="range"
                 :active-cells-array="activeCellsArray"
+                :editable="editable"
                 @activate="onActivate"
                 @deactivate="onDeactivate"
+                @change-text="(text) => cell.text = text"
               />
             </tr>
           </table>
@@ -41,11 +43,13 @@
             :rows="rows"
             :cols="cols"
             :cell-active-configuration="cellActiveConfiguration"
+            :editable="editable"
             @merge-cells="onMergeCells"
             @split-cells="onSplitCells"
             @change-rows="onChangeRows"
             @change-cols="onChangeCols"
             @change-cell="onChangeCell"
+            @switch-editable="onSwitchEditable"
           />
         </div>
       </div>
@@ -64,7 +68,7 @@
 </template>
 
 <script>
-import ConfigurationTableCell from './ConfigurationTableCell'
+import ConfigurationCellsTableCell from './ConfigurationCellsTableCell'
 import ConfigurationCellsForm from './ConfigurationCellsForm'
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
@@ -72,7 +76,7 @@ import { Cell } from '@/model/WidgetTable'
 export default {
   name: 'ConfigurationCells',
   components: {
-    ConfigurationTableCell,
+    ConfigurationCellsTableCell,
     ConfigurationCellsForm
   },
   data () {
@@ -89,7 +93,9 @@ export default {
       // 鼠标框选范围开始位置
       startPosition: null,
       // 鼠标框选范围结束位置
-      endPosition: null
+      endPosition: null,
+      // 是否开启编辑
+      editable: false
     }
   },
   props: {
@@ -131,19 +137,32 @@ export default {
     },
     // 辅助变量 - 存储所有激活状态单元格
     cellArrayActive () {
-      return this.cellArray.filter(cell => this.activeCellsArray.includes(cell.index))
+      return this.cellArray.filter((cell) =>
+        this.activeCellsArray.includes(cell.index)
+      )
     },
     cellActiveConfiguration () {
       // console.log(this.cellArrayActive)
-      const configurationNames = ['width', 'height', 'borderColor']
+      const configurationNames = [
+        'width',
+        'height',
+        'borderColor',
+        'color',
+        'text',
+        'textAlign',
+        'textIndent',
+        'fontSize',
+        'fontWeight',
+        'tableName',
+        'className'
+      ]
       const configurationMap = configurationNames.reduce((acc, name) => {
         acc[name] = new Set()
         return acc
       }, {})
 
-      this.cellArrayActive.forEach(cell => {
-        configurationNames.forEach(name => {
-          // console.log(configurationMap[name])
+      this.cellArrayActive.forEach((cell) => {
+        configurationNames.forEach((name) => {
           configurationMap[name].add(cell[name])
         })
       })
@@ -155,7 +174,6 @@ export default {
     }
   },
   created () {
-    this.onMouseMove = debounce(this.onMouseMove, 10)
     this.cells = cloneDeep(this.value)
     const {
       rowLowerBound,
@@ -178,23 +196,22 @@ export default {
       this.startPosition = this.getTableOffset(e)
       // 清空结束位置
       this.endPosition = null
+
+      const mouseMoveHandler = debounce(e => {
+        if (e.path.includes(this.$refs.table)) {
+          this.endPosition = this.getTableOffset(e)
+        }
+      }, 10)
+      const mouseUpHandler = e => {
+        mouseMoveHandler(e)
+        window.removeEventListener('mousemove', mouseMoveHandler)
+        window.removeEventListener('mouseup', mouseUpHandler)
+      }
       // 增加监听
-      window.addEventListener('mousemove', this.onMouseMove)
-      window.addEventListener('mouseup', this.onMouseUp)
+      window.addEventListener('mousemove', mouseMoveHandler)
+      window.addEventListener('mouseup', mouseUpHandler)
       // 存储一个保存所有索引的set，用于判断是否所有状态已经更新
       this.toBeActivateAndDeactivateSet = new Set(this.cellIndexSet)
-    },
-    onMouseMove (e) {
-      if (e.path.includes(this.$refs.table)) {
-        this.endPosition = this.getTableOffset(e)
-      }
-    },
-    onMouseUp (e) {
-      if (e.path.includes(this.$refs.table)) {
-        this.onMouseMove(e)
-        window.removeEventListener('mousemove', this.onMouseMove)
-      }
-      window.removeEventListener('mouseup', this.onMouseUp)
     },
     // 激活
     onActivate (cellIndex) {
@@ -366,9 +383,14 @@ export default {
     },
     // 单元格配置修改
     onChangeCell (name, val) {
-      this.cellArrayActive.forEach(cell => {
+      this.cellArrayActive.forEach((cell) => {
         cell[name] = val
       })
+    },
+    onSwitchEditable () {
+      this.editable = !this.editable
+      this.startPosition = null
+      this.endPosition = null
     },
     // 确定
     onConfirm () {
@@ -385,8 +407,8 @@ export default {
       }
       let target = e.target
       while (target !== this.$refs.table) {
-        offset.x += target.offsetLeft
-        offset.y += target.offsetTop
+        offset.x += target.offsetLeft || 0
+        offset.y += target.offsetTop || 0
         target = target.offsetParent
       }
       return offset
@@ -483,9 +505,7 @@ export default {
     // 通过index获取单元格信息
     getCellByIndex (index) {
       const [, rowIndex] = /^(\d+)-\d+_\d+-\d+$/.exec(index)
-      const cell = this.cells[rowIndex].find(
-        (cell) => cell.index === index
-      )
+      const cell = this.cells[rowIndex].find((cell) => cell.index === index)
       const colIndex = this.cells[rowIndex].findIndex(
         (cell) => cell.index === index
       )
@@ -497,11 +517,10 @@ export default {
     }
   }
 }
-
 </script>
 <style lang='scss' scoped>
 .dialogContent {
-  display:flex;
+  display: flex;
   height: 80vh;
   .tableContent {
     flex: 1 1 auto;
