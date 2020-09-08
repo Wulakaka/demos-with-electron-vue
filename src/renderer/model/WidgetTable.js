@@ -7,12 +7,12 @@ export class Cell {
     this.width = width
     this.height = height
     this.borderColor = '#000000'
-    this.color = '#000000'
+    this.color = ''
     this.text = '文本内容'
-    this.textAlign = 'unset'
+    this.textAlign = ''
     this.textIndent = 0
-    this.fontSize = 12
-    this.fontWeight = 'unset'
+    this.fontSize = 0
+    this.fontWeight = ''
     this.tableName = ''
     this.className = ''
   }

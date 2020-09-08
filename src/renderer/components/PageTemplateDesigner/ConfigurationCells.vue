@@ -141,8 +141,8 @@ export default {
         this.activeCellsArray.includes(cell.index)
       )
     },
+    // 可以批量修改的配置项
     cellActiveConfiguration () {
-      // console.log(this.cellArrayActive)
       const configurationNames = [
         'width',
         'height',
@@ -387,10 +387,21 @@ export default {
         cell[name] = val
       })
     },
+    // 可编辑模式切换
     onSwitchEditable () {
       this.editable = !this.editable
       this.startPosition = null
       this.endPosition = null
+      // 默认选中第一个
+      if (this.editable) {
+        this.$nextTick(() => {
+          const input = this.$refs.table.querySelector('input')
+          if (input) {
+            input.focus()
+            input.select()
+          }
+        })
+      }
     },
     // 确定
     onConfirm () {

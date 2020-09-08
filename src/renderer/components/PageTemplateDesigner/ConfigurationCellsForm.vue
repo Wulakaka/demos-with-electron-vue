@@ -41,17 +41,18 @@
         @input="(val) => {
           $emit('change-cell','text',val)
         }"
+        clearable
       />
     </el-form-item>
     <el-form-item label="对齐方式">
       <el-select
+        clearable
         :value="cellConfiguration('textAlign')"
         @change="(val) => $emit('change-cell','textAlign',val)"
         placeholder="请选择"
       >
         <el-option
           v-for="item in [
-            {value: 'unset', label:'不进行设置'},
             {value: 'left', label:'左对齐'},
             {value: 'center', label:'居中对齐'},
             {value: 'right', label:'右对齐'},
@@ -64,6 +65,7 @@
     </el-form-item>
     <el-form-item label="缩进">
       <el-input-number
+        clearable
         :value="cellConfiguration('textIndent')"
         size="mini"
         @change="(val) => $emit('change-cell','textIndent',val)"
@@ -73,6 +75,7 @@
     </el-form-item>
     <el-form-item label="字号">
       <el-input-number
+        clearable
         :value="cellConfiguration('fontSize')"
         size="mini"
         @change="(val) => $emit('change-cell','fontSize',val)"
@@ -82,13 +85,13 @@
     </el-form-item>
     <el-form-item label="文字加粗">
       <el-select
+        clearable
         :value="cellConfiguration('fontWeight')"
         @change="(val) => $emit('change-cell','fontWeight',val)"
         placeholder="请选择"
       >
         <el-option
           v-for="item in [
-            {value: 'unset', label:'不进行设置'},
             {value: 'normal', label:'正常'},
             {value: 'bold', label:'加粗'},
           ]"
@@ -118,18 +121,21 @@
     </el-form-item>
     <el-form-item label="文字颜色">
       <el-color-picker
+        clearable
         :value="cellConfiguration('color')"
         @change="(val) => $emit('change-cell','color',val)"
       />
     </el-form-item>
     <el-form-item label="单元格边框颜色">
       <el-color-picker
+        clearable
         :value="cellConfiguration('borderColor')"
         @change="(val) => $emit('change-cell','borderColor',val)"
       />
     </el-form-item>
     <el-form-item label="源数据表名">
       <el-select
+        clearable
         :value="cellConfiguration('tableName')"
         @change="(val) => $emit('change-cell','tableName',val)"
         placeholder="请选择"
@@ -144,6 +150,7 @@
     </el-form-item>
     <el-form-item label="源数据字段名">
       <el-select
+        clearable
         :value="cellConfiguration('className')"
         @change="(val) => $emit('change-cell','className',val)"
         placeholder="请选择"

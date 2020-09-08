@@ -30,14 +30,14 @@ export default {
       return row.split('-')[1] - row.split('-')[0]
     },
     style () {
-      return {
-        'border-color': this.cell.borderColor || 'unset',
-        color: this.cell.color || 'unset',
-        'text-align': this.cell.textAlign || 'unset',
-        'text-indent': this.cell.textIndent ? `${this.cell.textIndent}px` : 'unset',
-        'font-size': this.cell.fontSize ? `${this.cell.fontSize}px` : 'unset',
-        'font-weight': this.cell.fontWeight || 'unset'
-      }
+      const style = {}
+      if (this.cell.borderColor) style['border-color'] = this.cell.borderColor
+      if (this.cell.color) style.color = this.cell.color
+      if (this.cell.textAlign) style['text-align'] = this.cell.textAlign
+      if (this.cell.textIndent) style['text-indent'] = `${this.cell.textIndent}px`
+      if (this.cell.fontSize) style['font-size'] = `${this.cell.fontSize}px`
+      if (this.cell.fontWeight) style['font-weight'] = this.cell.fontWeight
+      return style
     }
   }
 }
