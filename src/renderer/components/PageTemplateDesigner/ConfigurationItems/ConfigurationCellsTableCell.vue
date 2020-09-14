@@ -3,8 +3,6 @@
     ref="td"
     :colspan="colspan"
     :rowspan="rowspan"
-    :height="cell.height"
-    :width="cell.width"
     :class="{active: active}"
     :style="style"
   >
@@ -54,6 +52,8 @@ export default {
     },
     style () {
       const style = {}
+      if (this.cell.width) style.width = `${this.cell.width}px`
+      if (this.cell.height) style.height = `${this.cell.height}px`
       if (this.cell.borderColor) style['border-color'] = this.cell.borderColor
       if (this.cell.color) style.color = this.cell.color
       if (this.cell.textAlign) style['text-align'] = this.cell.textAlign

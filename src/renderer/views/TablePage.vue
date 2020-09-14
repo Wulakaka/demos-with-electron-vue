@@ -7,7 +7,7 @@
 <script>
 import WidgetTable from '@/components/widget/WidgetTable.vue'
 export default {
-  name: 'EmptyPage',
+  name: 'TablePage',
   components: {
     WidgetTable
   }

@@ -480,10 +480,10 @@ export default {
         colLowerBound !== newColLowerBound ||
         colHigherBound !== newColHigherBound
       ) {
-        rowLowerBound = newRowLowerBound || rowLowerBound
-        rowHigherBound = newRowHigherBound || rowHigherBound
-        colLowerBound = newColLowerBound || colLowerBound
-        colHigherBound = newColHigherBound || colHigherBound
+        rowLowerBound = typeof newRowLowerBound === 'undefined' ? rowLowerBound : newRowLowerBound
+        rowHigherBound = typeof newRowHigherBound === 'undefined' ? rowHigherBound : newRowHigherBound
+        colLowerBound = typeof newColLowerBound === 'undefined' ? colLowerBound : newColLowerBound
+        colHigherBound = typeof newColHigherBound === 'undefined' ? colHigherBound : newColHigherBound
         this.cellArray.forEach((cell) => {
           const [
             ,

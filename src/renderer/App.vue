@@ -9,7 +9,6 @@
 
 <script>
 import '@/mock/mockData'
-import '@/exercise/eloquentJavaScript.js'
 export default {
   name: 'EVHelloWorld',
   methods: {

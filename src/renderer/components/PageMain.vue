@@ -46,8 +46,17 @@
           <el-menu-item index="/customConstructor">
             自定义构造器
           </el-menu-item>
-          <el-menu-item index="/emptyPage">
-            空白页
+          <el-menu-item index="/tablePage">
+            表格效果
+          </el-menu-item>
+        </el-submenu>
+        <el-submenu index="4">
+          <template slot="title">
+            <i class="el-icon-setting" />
+            <span slot="title">练习题</span>
+          </template>
+          <el-menu-item index="/chapter16">
+            16章代码
           </el-menu-item>
         </el-submenu>
       </el-menu>

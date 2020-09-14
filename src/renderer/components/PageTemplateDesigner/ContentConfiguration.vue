@@ -26,29 +26,7 @@
   </div>
 </template>
 <script>
-import ConfigurationWidth from './ConfigurationWidth'
-import ConfigurationHeight from './ConfigurationHeight'
-import ConfigurationPositionX from './ConfigurationPositionX'
-import ConfigurationPositionY from './ConfigurationPositionY'
-import ConfigurationFont from './ConfigurationFont'
-import ConfigurationBorder from './ConfigurationBorder'
-import ConfigurationPlaceholder from './ConfigurationPlaceholder'
-import ConfigurationReadonly from './ConfigurationReadonly'
-import ConfigurationMultiSelect from './ConfigurationMultiSelect'
-import ConfigurationText from './ConfigurationText'
-import ConfigurationColumn from './ConfigurationColumn'
-import ConfigurationDirection from './ConfigurationDirection'
-import ConfigurationLeftPartWidthRate from './ConfigurationLeftPartWidthRate'
-import ConfigurationRightPartWidthRate from './ConfigurationRightPartWidthRate'
-import ConfigurationLeftTitle from './ConfigurationLeftTitle'
-import ConfigurationTimeTitle from './ConfigurationTimeTitle'
-import ConfigurationEventTitle from './ConfigurationEventTitle'
-import ConfigurationTotalTitle from './ConfigurationTotalTitle'
-import ConfigurationYAxis from './ConfigurationYAxis'
-import ConfigurationXAxis from './ConfigurationXAxis'
-import ConfigurationDataSource from './ConfigurationDataSource'
-import ConfigurationDictionarySource from './ConfigurationDictionarySource'
-import ConfigurationCells from './ConfigurationCells'
+import ConfigurationItems from './configurationItems'
 import { configurationMap } from './WidgetConfigurationItems'
 import { createNamespacedHelpers } from 'vuex'
 const { mapActions, mapGetters, mapState } = createNamespacedHelpers(
@@ -57,29 +35,7 @@ const { mapActions, mapGetters, mapState } = createNamespacedHelpers(
 export default {
   name: 'ContentConfiguration',
   components: {
-    ConfigurationWidth,
-    ConfigurationHeight,
-    ConfigurationPositionX,
-    ConfigurationPositionY,
-    ConfigurationFont,
-    ConfigurationBorder,
-    ConfigurationPlaceholder,
-    ConfigurationReadonly,
-    ConfigurationMultiSelect,
-    ConfigurationText,
-    ConfigurationColumn,
-    ConfigurationDirection,
-    ConfigurationLeftPartWidthRate,
-    ConfigurationRightPartWidthRate,
-    ConfigurationLeftTitle,
-    ConfigurationTimeTitle,
-    ConfigurationEventTitle,
-    ConfigurationTotalTitle,
-    ConfigurationYAxis,
-    ConfigurationXAxis,
-    ConfigurationDataSource,
-    ConfigurationDictionarySource,
-    ConfigurationCells
+    ...ConfigurationItems
   },
   watch: {
     activeWidget: {

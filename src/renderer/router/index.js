@@ -39,10 +39,14 @@ export default new Router({
           component: require('@/views/CustomConstructor').default
         },
         {
-          path: 'emptyPage',
-          name: 'EmptyPage',
-          // component: () => import('@/views/EmptyPage.vue')
-          component: () => Promise.resolve(require('@/views/EmptyPage.vue'))
+          path: 'tablePage',
+          name: 'TablePage',
+          component: () => Promise.resolve(require('@/views/TablePage.vue'))
+        },
+        {
+          path: 'chapter16',
+          name: 'Chapter16',
+          component: () => Promise.resolve(require('@/views/Chapter16.vue'))
         },
         {
           path: '*',

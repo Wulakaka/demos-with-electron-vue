@@ -24,7 +24,6 @@
   </div>
 </template>
 <script>
-
 const { Observable } = require('rxjs')
 export default {
   name: 'CanvasPage',
@@ -33,23 +32,28 @@ export default {
       observable: null,
       ctx: null,
       positions: [],
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }]
+      tableData: [
+        {
+          date: '2016-05-02',
+          name: '王小虎',
+          address: '上海市普陀区金沙江路 1518 弄'
+        },
+        {
+          date: '2016-05-04',
+          name: '王小虎',
+          address: '上海市普陀区金沙江路 1517 弄'
+        },
+        {
+          date: '2016-05-01',
+          name: '王小虎',
+          address: '上海市普陀区金沙江路 1519 弄'
+        },
+        {
+          date: '2016-05-03',
+          name: '王小虎',
+          address: '上海市普陀区金沙江路 1516 弄'
+        }
+      ]
     }
   },
   watch: {
@@ -139,10 +143,10 @@ export default {
   created () {
     this.observable = new Observable(subscriber => {
       let x = 1
-      subscriber.next({ x: (x++) * 10, y: Math.random() * 200 })
+      subscriber.next({ x: x++ * 10, y: Math.random() * 200 })
       const timeout = () => {
         setTimeout(() => {
-          subscriber.next({ x: (x++) * 10, y: Math.random() * 200 })
+          subscriber.next({ x: x++ * 10, y: Math.random() * 200 })
           if (x * 10 > 300) {
             subscriber.complete()
           } else {
@@ -154,7 +158,6 @@ export default {
     })
   }
 }
-
 </script>
 <style lang="scss" scoped>
 canvas {
