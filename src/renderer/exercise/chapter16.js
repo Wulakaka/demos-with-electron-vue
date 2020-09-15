@@ -1,13 +1,16 @@
 export const simpleLevelPlan = `
-......................
-..#................#..
-..#..............=.#..
-..#.........o.o....#..
-..#.@......#####...#..
-..#####............#..
-......#++++++++++++#..
-......##############..
-......................
+..................................
+.################################.
+.#..................v...........#.
+.#..............................#.
+.#..............................#.
+.#...........................o..#.
+.#..@...........................#.
+.##########..............########.
+..........#..o..o..o..o..#........
+..........#...........M..#........
+..........################........
+..................................
 `
 export class Level {
   constructor (plan) {
@@ -28,7 +31,7 @@ export class Level {
     })
   }
 }
-// 是否碰撞
+// 是否接触
 Level.prototype.touches = function (pos, size, type) {
   const xStart = Math.floor(pos.x)
   const xEnd = Math.ceil(pos.x + size.x)
@@ -61,15 +64,18 @@ export class State {
   }
 }
 State.prototype.update = function (time, keys) {
+  // 所有演员更新自己状态
   const actors = this.actors.map((actor) => actor.update(time, this, keys))
   let newState = new State(this.level, actors, this.status)
   if (newState.status !== 'playing') return newState
 
+  // 如果玩家触碰岩浆，游戏结束
   const player = newState.player
   if (this.level.touches(player.pos, player.size, 'lava')) {
     return new State(this.level, actors, 'lost')
   }
 
+  // 如果有演员与玩家发生重叠，触发相应的碰撞函数
   for (const actor of actors) {
     if (actor !== player && overlap(actor, player)) {
       newState = actor.collide(newState)
@@ -214,6 +220,36 @@ Coin.prototype.update = function (time) {
   )
 }
 
+const monsterSpeed = 4
+
+class Monster {
+  constructor (pos) { this.pos = pos }
+
+  get type () { return 'monster' }
+
+  static create (pos) { return new Monster(pos.plus(new Vec(0, -1))) }
+
+  update (time, state) {
+    const player = state.player
+    const speed = (player.pos.x < this.pos.x ? -1 : 1) * time * monsterSpeed
+    const newPos = new Vec(this.pos.x + speed, this.pos.y)
+    if (state.level.touches(newPos, this.size, 'wall')) return this
+    else return new Monster(newPos)
+  }
+
+  collide (state) {
+    const player = state.player
+    if (player.pos.y + player.size.y < this.pos.y + 0.5) {
+      const filtered = state.actors.filter(a => a !== this)
+      return new State(state.level, filtered, state.status)
+    } else {
+      return new State(state.level, state.actors, 'lost')
+    }
+  }
+}
+
+Monster.prototype.size = new Vec(1.2, 2)
+
 const levelChars = {
   '.': 'empty',
   '#': 'wall',
@@ -221,7 +257,8 @@ const levelChars = {
   '@': Player,
   o: Coin,
   '=': Lava,
-  v: Lava
+  v: Lava,
+  M: Monster
 }
 
 function elt (name, attrs, ...children) {
@@ -323,10 +360,14 @@ function trackKeys (keys) {
 
   window.addEventListener('keydown', track)
   window.addEventListener('keyup', track)
+  down.unregister = () => {
+    window.removeEventListener('keydown', track)
+    window.removeEventListener('keyup', track)
+  }
   return down
 }
 
-const arrowKeys = trackKeys(['ArrowLeft', 'ArrowRight', 'ArrowUp'])
+// const arrowKeys = trackKeys(['ArrowLeft', 'ArrowRight', 'ArrowUp'])
 
 function runAnimation (frameFunc) {
   let lastTime = null
@@ -347,8 +388,27 @@ function runLevel (level, Display) {
   const display = new Display(document.body, level)
   let state = State.start(level)
   let ending = 1
+  let running = 'yes'
   return new Promise((resolve) => {
-    runAnimation((time) => {
+    function escHandler (event) {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      if (running === 'no') {
+        running = 'yes'
+        runAnimation(frame)
+      } else if (running === 'yes') {
+        running = 'pausing'
+      } else {
+        running = 'yes'
+      }
+    }
+    window.addEventListener('keydown', escHandler)
+    const arrowKeys = trackKeys(['ArrowLeft', 'ArrowRight', 'ArrowUp'])
+    function frame (time) {
+      if (running === 'pausing') {
+        running = 'no'
+        return false
+      }
       state = state.update(time, arrowKeys)
       display.syncState(state)
       if (state.status === 'playing') {
@@ -358,17 +418,41 @@ function runLevel (level, Display) {
         return true
       } else {
         display.clear()
+        window.removeEventListener('keydown', escHandler)
+        arrowKeys.unregister()
         resolve(state.status)
         return false
       }
-    })
+    }
+    runAnimation(frame)
+    // runAnimation((time) => {
+    //   state = state.update(time, arrowKeys)
+    //   display.syncState(state)
+    //   if (state.status === 'playing') {
+    //     return true
+    //   } else if (ending > 0) {
+    //     ending -= time
+    //     return true
+    //   } else {
+    //     display.clear()
+    //     resolve(state.status)
+    //     return false
+    //   }
+    // })
   })
 }
 
 export async function runGame (plans, Display) {
-  for (let level = 0; level < plans.length;) {
+  let lives = 3
+  for (let level = 0; level < plans.length && lives > 0;) {
+    console.log(lives)
     const status = await runLevel(new Level(plans[level]), Display)
     if (status === 'won') level++
+    if (status === 'lost') lives--
   }
-  console.log("You've won!")
+  if (lives > 0) {
+    console.log("You've won!")
+  } else {
+    console.log('Game over')
+  }
 }

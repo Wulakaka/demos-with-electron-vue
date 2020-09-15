@@ -36,6 +36,9 @@ export default {
 .coin {
   background: rgb(241, 229, 89);
 }
+.monster {
+  background: aliceblue;
+}
 .player {
   background: rgb(64, 64, 64);
   .lost & {
