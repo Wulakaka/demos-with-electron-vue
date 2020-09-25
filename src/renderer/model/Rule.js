@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-debugger */
 /* eslint-disable no-cond-assign */
-const str = '(((a > 2) && (b >= 3)) || (c == 5))'
+const str = '(((a > 2) && (b >= 3)) || c)'
 
 const result = {
   type: 'apply',
@@ -45,8 +45,15 @@ function skipSpace (string) {
   if (first === -1) return ''
   return string.slice(first)
 }
-
 function parse (program) {
+  const { expr, rest } = parseExpression(program)
+  if (skipSpace(rest).length > 0) {
+    throw new SyntaxError('Unexpected text after program')
+  }
+  return expr
+}
+
+function parseExpression (program) {
   program = skipSpace(program)
   if (program[0] === '(') {
     const expr = {
@@ -56,7 +63,7 @@ function parse (program) {
     }
     program = skipSpace(program.slice(1))
     while (program[0] !== ')') {
-      const arg = parse(program)
+      const arg = parseExpression(program)
       if (arg.expr.type === 'operator') {
         expr.operator = arg.expr.operator
       } else {
@@ -89,39 +96,3 @@ function parseArg (program) {
   }
   return { expr, rest: program.slice(match[0].length) }
 }
-
-// function parseApply (program, expr) {
-//   if (program[0] !== '(') {
-//     return {
-//       expr: expr,
-//       rest: program
-//     }
-//   }
-//   expr = {
-//     type: 'apply', operator: expr, args: []
-//   }
-
-//   while (program[0] !== ')') {
-//     const arg = parseR
-//   }
-// }
-
-// const floatType = {
-//   type: 'float',
-//   value: 12
-// }
-
-// const booleanType = {
-//   type: 'boolean',
-//   value: true
-// }
-
-// const valueType = {
-//   type: 'value',
-//   value: 12.5
-// }
-
-// const wordType = {
-//   type: 'word',
-//   name: 'a'
-// }
