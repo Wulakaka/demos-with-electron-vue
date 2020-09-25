@@ -9,6 +9,8 @@
 
 <script>
 import '@/mock/mockData'
+import '@/model/Rule'
+import '@/model/chapter12'
 export default {
   name: 'EVHelloWorld',
   methods: {
